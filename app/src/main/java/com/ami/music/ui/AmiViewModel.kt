@@ -51,7 +51,7 @@ class AmiViewModel(application: Application) : AndroidViewModel(application) {
     fun initialize() {
         mutableStartupError.value = null
         viewModelScope.launch {
-            try { repository.ensureSeed(); mutableReady.value = true }
+            try { repository.ensureSeed(); mutableReady.value = true; app.importer.refreshExistingMetadata() }
             catch (cancelled: CancellationException) { throw cancelled }
             catch (_: Exception) { mutableStartupError.value = "Your library could not be opened. Check that your phone has free storage, then retry." }
         }

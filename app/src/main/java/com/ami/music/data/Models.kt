@@ -30,6 +30,7 @@ data class Track(
     val mimeType: String? = null,
     val bitrate: String? = null,
     val sizeBytes: Long? = null,
+    @androidx.room.ColumnInfo(defaultValue = "0") val metadataVersion: Int = 0,
 )
 
 @Entity(tableName = "playlists")

@@ -15,6 +15,7 @@ abstract class AmiDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE tracks ADD COLUMN device INTEGER NOT NULL DEFAULT 0")
                 db.execSQL("ALTER TABLE tracks ADD COLUMN available INTEGER NOT NULL DEFAULT 1")
                 db.execSQL("ALTER TABLE tracks ADD COLUMN sizeBytes INTEGER")
+                db.execSQL("ALTER TABLE tracks ADD COLUMN metadataVersion INTEGER NOT NULL DEFAULT 0")
             }
         }
     }

@@ -23,6 +23,20 @@ sealed interface ImportResult {
 class AudioImporter(private val context: Context, private val repository: LibraryRepository,
     private val storageDirectory: File = File(context.filesDir, "audio")) {
     private val mutex = Mutex()
+    suspend fun refreshExistingMetadata() = mutex.withLock {
+        withContext(Dispatchers.IO) {
+            repository.dao.allTracks().filter { it.imported && it.metadataVersion == 0 }.forEach { track ->
+                coroutineContext.ensureActive()
+                try {
+                    val tags = readAudioTags(context, Uri.parse(track.sourceUri))
+                    repository.dao.upsertTracks(listOf(track.copy(artworkUri = tags.artworkUri, albumArtist = tags.albumArtist,
+                        genre = tags.genre, year = tags.year, trackNumber = tags.trackNumber, mimeType = tags.mimeType,
+                        bitrate = tags.bitrate, metadataVersion = 1)))
+                } catch (cancelled: CancellationException) { throw cancelled }
+                catch (_: Exception) { /* Keep unavailable imports intact and retry on the next launch. */ }
+            }
+        }
+    }
     suspend fun importAudio(uri: Uri): ImportResult = mutex.withLock {
         withContext(Dispatchers.IO) {
             val directory = storageDirectory.apply { mkdirs() }
@@ -76,7 +90,7 @@ class AudioImporter(private val context: Context, private val repository: Librar
                     "local-album-${artist.lowercase()}-${album.lowercase()}", album, Uri.fromFile(finalFile).toString(), duration,
                     artwork = hash.take(2).toInt(16) % 4, imported = true, fingerprint = hash,
                     artworkUri = tags.artworkUri, albumArtist = tags.albumArtist, genre = tags.genre, year = tags.year,
-                    trackNumber = tags.trackNumber, fileName = name, mimeType = tags.mimeType, bitrate = tags.bitrate, sizeBytes = size)
+                    trackNumber = tags.trackNumber, fileName = name, mimeType = tags.mimeType, bitrate = tags.bitrate, sizeBytes = size, metadataVersion = 1)
                 withContext(NonCancellable) {
                     require(workingFile.renameTo(finalFile)) { "Could not save the audio file." }
                     movedFile = finalFile

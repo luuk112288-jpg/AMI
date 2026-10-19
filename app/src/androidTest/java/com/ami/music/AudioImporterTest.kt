@@ -7,6 +7,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.ami.music.data.*
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.flow.first
 import org.junit.*
 import org.junit.Assert.*
 import org.junit.runner.RunWith
@@ -48,6 +49,23 @@ class AudioImporterTest {
         assertEquals("Various Test Artists", track.albumArtist)
         assertNotNull(track.artworkUri)
         context.contentResolver.openInputStream(Uri.parse(track.artworkUri))!!.use { assertTrue(it.read() >= 0) }
+    }
+    @Test fun existingVersionOneImportGainsCoverWithoutLosingFavorites() = runBlocking {
+        val file = File.createTempFile("legacy", ".mp3", context.cacheDir).also { created += it }
+        androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().context.assets.open("tagged.mp3").use { input -> file.outputStream().use { input.copyTo(it) } }
+        val track = Track("legacy-import", "Phone Test Song", "a", "Phone Test Artist", "b", "Phone Test Album", Uri.fromFile(file).toString(), 2000, imported = true)
+        repository.dao.insertTracks(listOf(track))
+        repository.setLiked(track.id, true)
+        val playlist = repository.createPlaylist("Keep me")
+        repository.addToPlaylist(playlist, track.id)
+        importer.refreshExistingMetadata()
+        val refreshed = repository.dao.track(track.id)!!
+        assertNotNull(refreshed.artworkUri)
+        assertEquals("Electronic", refreshed.genre)
+        assertEquals(1, refreshed.metadataVersion)
+        assertEquals(track.sourceUri, refreshed.sourceUri)
+        assertEquals(track.id, repository.dao.playlistEntries(playlist).single().trackId)
+        assertTrue(repository.state.first().likedIds.contains(track.id))
     }
     @Test fun duplicateImportDoesNotDuplicateAndPrivateCopySurvives() = runBlocking {
         val file = File.createTempFile("demo", ".wav", context.cacheDir).also { created += it }

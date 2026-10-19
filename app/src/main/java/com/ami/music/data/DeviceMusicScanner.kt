@@ -50,7 +50,7 @@ class DeviceMusicScanner(private val context: Context, private val repository: L
                             artwork = (id % 4).toInt(), addedAt = number("date_added") * 1000,
                             artworkUri = tags.artworkUri, device = true, albumArtist = tags.albumArtist, genre = tags.genre,
                             year = tags.year, trackNumber = tags.trackNumber, fileName = filename,
-                            mimeType = tags.mimeType ?: text("mime_type"), bitrate = tags.bitrate, sizeBytes = number("_size"))
+                            mimeType = tags.mimeType ?: text("mime_type"), bitrate = tags.bitrate, sizeBytes = number("_size"), metadataVersion = 1)
                     }
                 }
             }

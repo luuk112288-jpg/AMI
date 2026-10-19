@@ -38,7 +38,7 @@ class DeviceMusicTest {
             put(MediaStore.Audio.Media.RELATIVE_PATH, "Music/AMI-tests")
             put(MediaStore.Audio.Media.IS_PENDING, 1)
         }
-        val target = requireNotNull(context.contentResolver.insert(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, values))
+        val target = requireNotNull(context.contentResolver.insert(MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY), values))
         uri = target
         InstrumentationRegistry.getInstrumentation().context.assets.open("tagged.mp3").use { input ->
             context.contentResolver.openOutputStream(target)!!.use { input.copyTo(it) }
@@ -61,6 +61,24 @@ class DeviceMusicTest {
         assertTrue(track.durationMs > 0)
         assertNotNull(track.artworkUri)
         context.contentResolver.openInputStream(Uri.parse(track.artworkUri))!!.use { assertTrue(it.read() >= 0) }
+        val ready = java.util.concurrent.CountDownLatch(1)
+        val error = java.util.concurrent.atomic.AtomicReference<Throwable>()
+        var player: androidx.media3.exoplayer.ExoPlayer? = null
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        try {
+            instrumentation.runOnMainSync {
+                player = androidx.media3.exoplayer.ExoPlayer.Builder(context).build().apply {
+                    addListener(object : androidx.media3.common.Player.Listener {
+                        override fun onPlaybackStateChanged(state: Int) { if (state == androidx.media3.common.Player.STATE_READY) ready.countDown() }
+                        override fun onPlayerError(failure: androidx.media3.common.PlaybackException) { error.set(failure); ready.countDown() }
+                    })
+                    setMediaItem(androidx.media3.common.MediaItem.fromUri(track.sourceUri))
+                    prepare()
+                }
+            }
+            assertTrue("Scanned content URI should prepare for playback", ready.await(15, java.util.concurrent.TimeUnit.SECONDS))
+            assertNull(error.get())
+        } finally { instrumentation.runOnMainSync { player?.release() } }
         DeviceMusicScanner(context, repo).scan()
         assertEquals(1, repo.dao.allTracks().count { it.sourceUri == target.toString() })
     }
