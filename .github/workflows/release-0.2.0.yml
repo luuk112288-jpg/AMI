@@ -1,0 +1,74 @@
+name: Publish verified AMI 0.2.0
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    paths: [".github/workflows/release-0.2.0.yml"]
+permissions:
+  contents: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: luuk112288-jpg/AMI
+    steps:
+      - name: Verify tested source and download the exact APK artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api repos/luuk112288-jpg/AMI/actions/runs/39275146863 > run.json
+          python3 - <<'PY'
+          import json
+          run = json.load(open("run.json"))
+          assert run["conclusion"] == "success", "Source build did not pass"
+          assert run["head_sha"] == "c8c667abf630dac68c90a748f54f032c4346e890", "Wrong source"
+          PY
+          gh api repos/luuk112288-jpg/AMI/actions/artifacts/12197625959/zip > artifact.zip
+          echo 'c376a627ad89efc021905ed532f94ca47725b7b6e5bf5e6c3ea511f98604219d  artifact.zip' | sha256sum --check
+          unzip -q artifact.zip -d extracted
+          mkdir release
+          cp extracted/app-debug.apk release/AMI-0.2.0.apk
+      - name: Check Android package version
+        shell: bash
+        run: |
+          set -euo pipefail
+          AAPT=$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -n 1)
+          test -n "$AAPT"
+          "$AAPT" dump badging release/AMI-0.2.0.apk > package.txt
+          python3 - <<'PY'
+          text = open("package.txt").read()
+          assert "name='com.ami.music'" in text, "Unexpected Android package"
+          assert "versionCode='2'" in text, "Old APK version code"
+          assert "versionName='0.2.0'" in text, "Old APK version"
+          assert "android.permission.READ_MEDIA_AUDIO" in text, "Phone music permission missing"
+          print(text.splitlines()[0])
+          PY
+          cd release
+          sha256sum AMI-0.2.0.apk > SHA256SUMS.txt
+      - name: Publish APK under Releases
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > notes.md <<'NOTES'
+          ## AMI 0.2.0 — Artificial Music Intelligence
+
+          Download **AMI-0.2.0.apk** hieronder en open het op je Android-telefoon. Deze download is de losse APK; uitpakken is niet nodig.
+
+          ### Nieuw
+          - **Your library → Scan phone** vindt je lokale muziek na toestemming.
+          - Echte ingebedde albumhoezen en beschikbare titel, artiest, album, albumartiest, jaar, genre en bestandsinformatie.
+          - Nummers afspelen vanaf je telefoon zonder extra audiokopie.
+          - Nieuw AMI-logo en Artificial Music Intelligence-naam.
+          - Bestaande imports krijgen ook albumhoezen; de database-upgrade behoudt playlists en likes.
+
+          APK-build, unit-tests en alle **21 Android-tests** geslaagd op Android 15.
+          Bron: c8c667abf630dac68c90a748f54f032c4346e890.
+          De APK is exact overgenomen uit de geslaagde build, niet opnieuw gebouwd.
+
+          Dit is een development-signed testversie voor Android 8+. Een oudere test-APK kan een andere ondertekening hebben. Als Android een handtekeningconflict meldt, kan installatie naast/over die oude versie niet; verwijderen van de oude app wist AMI-playlists en privé-imports. De oorspronkelijke gescande muziekbestanden blijven behouden.
+          NOTES
+          gh release create v0.2.0 release/AMI-0.2.0.apk release/SHA256SUMS.txt --repo luuk112288-jpg/AMI --target c8c667abf630dac68c90a748f54f032c4346e890 --title 'AMI 0.2.0 — Artificial Music Intelligence' --notes-file notes.md --latest
