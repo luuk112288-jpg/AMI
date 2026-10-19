@@ -11,6 +11,17 @@ import org.junit.runner.RunWith
 class NavigationTest {
     @get:Rule val compose = createAndroidComposeRule<MainActivity>()
     private fun waitForHome() { compose.waitUntil(15_000) { compose.onAllNodesWithText("Less noise.\nMore feeling.").fetchSemanticsNodes().isNotEmpty() } }
+    @Test fun phoneLibraryOffersScanAndExplainsLocalFiles() {
+        waitForHome()
+        compose.onNodeWithText("Your library").performClick()
+        compose.onNodeWithText("Scan phone").assertIsDisplayed()
+        compose.onNodeWithText("On device").performClick()
+        compose.onNodeWithText("Your music, right here").assertIsDisplayed()
+    }
+    @Test fun homeShowsArtificialMusicIntelligenceBrand() {
+        waitForHome()
+        compose.onNodeWithContentDescription("AMI — Artificial Music Intelligence").assertIsDisplayed()
+    }
     @Test fun searchFiltersEntities() {
         waitForHome()
         compose.onNodeWithContentDescription("Search music").performClick()
