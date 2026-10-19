@@ -15,6 +15,8 @@ interface LibraryDao {
     @Query("SELECT * FROM tracks") suspend fun allTracks(): List<Track>
     @Query("SELECT * FROM playlists WHERE id = :id") suspend fun playlist(id: String): Playlist?
     @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun insertTracks(tracks: List<Track>)
+    @Upsert suspend fun upsertTracks(tracks: List<Track>)
+    @Query("UPDATE tracks SET available = 0 WHERE device = 1") suspend fun markDeviceTracksUnavailable()
     @Insert(onConflict = OnConflictStrategy.ABORT) suspend fun insertPlaylist(playlist: Playlist)
     @Update suspend fun updatePlaylist(playlist: Playlist)
     @Query("DELETE FROM playlists WHERE id = :id") suspend fun deletePlaylist(id: String)

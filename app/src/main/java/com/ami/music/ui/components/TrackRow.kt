@@ -28,8 +28,10 @@ fun durationLabel(ms: Long): String {
     modifier: Modifier = Modifier,
 ) {
     var menu by remember { mutableStateOf(false) }
+    var details by remember { mutableStateOf(false) }
+    if (details) TrackDetails(track) { details = false }
     Row(modifier.fillMaxWidth().clickable(onClick = onPlay).padding(start = 20.dp, end = 8.dp, top = 7.dp, bottom = 7.dp), verticalAlignment = Alignment.CenterVertically) {
-        Artwork(track.artwork, Modifier.size(52.dp))
+        TrackArtwork(track, Modifier.size(52.dp))
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(track.title, color = if (active) Lime else MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -45,6 +47,7 @@ fun durationLabel(ms: Long): String {
                 DropdownMenuItem(text = { Text("Add to playlist") }, onClick = { menu = false; onAdd() })
                 DropdownMenuItem(text = { Text("Go to album") }, onClick = { menu = false; onAlbum() })
                 DropdownMenuItem(text = { Text("Go to artist") }, onClick = { menu = false; onArtist() })
+                DropdownMenuItem(text = { Text("Song details") }, onClick = { menu = false; details = true })
                 if (onRemove != null) DropdownMenuItem(text = { Text("Remove from playlist") }, onClick = { menu = false; onRemove() })
             }
         }

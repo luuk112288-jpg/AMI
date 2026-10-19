@@ -25,7 +25,7 @@ import com.ami.music.ui.theme.*
         itemsIndexed(state.queue, key = { index, track -> "${track.id}-$index" }) { index, track ->
             Column {
                 Row(Modifier.fillMaxWidth().clickable { playback.jumpTo(index) }.padding(start = 20.dp, end = 8.dp, top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Artwork(track.artwork, Modifier.size(48.dp))
+                    TrackArtwork(track, Modifier.size(48.dp))
                     Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
                         Text(track.title, color = if (state.current?.id == track.id) Lime else MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         Text(track.artist, color = Muted, maxLines = 1, overflow = TextOverflow.Ellipsis)

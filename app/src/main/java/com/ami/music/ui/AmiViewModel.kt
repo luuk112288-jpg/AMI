@@ -21,6 +21,28 @@ class AmiViewModel(application: Application) : AndroidViewModel(application) {
     val messages = mutableMessages.asSharedFlow()
     private val mutableImporting = MutableStateFlow(false)
     val importing = mutableImporting.asStateFlow()
+    private val mutableScanning = MutableStateFlow(false)
+    val scanning = mutableScanning.asStateFlow()
+    private val mutableScanMessage = MutableStateFlow<String?>(null)
+    val scanMessage = mutableScanMessage.asStateFlow()
+    fun scanPhone() {
+        if (mutableScanning.value) return
+        if (!DeviceMusicScanner.hasPermission(app)) { musicPermissionDenied(); return }
+        mutableScanning.value = true
+        mutableScanMessage.value = null
+        viewModelScope.launch {
+            try {
+                val count = app.deviceScanner.scan()
+                mutableScanMessage.value = if (count == 0) "No songs found. Use Import audio for files Android has not indexed." else "$count songs found on your phone."
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: SecurityException) { musicPermissionDenied() }
+            catch (_: Exception) { mutableScanMessage.value = "Could not scan your music. Your saved library is unchanged. Try again." }
+            finally { mutableScanning.value = false }
+        }
+    }
+    fun musicPermissionDenied() {
+        mutableScanMessage.value = "Allow Music and audio access in Android settings to scan your phone, or use Import audio to choose files."
+    }
     private val mutableReady = MutableStateFlow(false)
     val ready = mutableReady.asStateFlow()
     private val mutableStartupError = MutableStateFlow<String?>(null)

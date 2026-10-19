@@ -31,8 +31,8 @@ import com.ami.music.ui.theme.*
         if (track == null) {
             EmptyState(Icons.Default.MusicNote, "A moment of quiet", "Choose a track to start listening.", "Find music", onBack)
         } else Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(if (track.imported) "FROM YOUR COLLECTION" else "AMI ORIGINALS", color = Muted, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(vertical = 16.dp))
-            Artwork(track.artwork, Modifier.widthIn(max = 380.dp).fillMaxWidth().aspectRatio(1f), track.album)
+            Text(if (track.imported || track.device) "FROM YOUR COLLECTION" else "AMI ORIGINALS", color = Muted, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(vertical = 16.dp))
+            TrackArtwork(track, Modifier.widthIn(max = 380.dp).fillMaxWidth().aspectRatio(1f), track.album)
             Spacer(Modifier.height(28.dp))
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {

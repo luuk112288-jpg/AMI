@@ -43,13 +43,13 @@ import com.ami.music.ui.theme.*
                 }
             })
             Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                Artwork(if (kind == "liked") 2 else tracks.firstOrNull()?.artwork ?: 0, Modifier.widthIn(max = 250.dp).fillMaxWidth().aspectRatio(1f), if (kind == "liked") "ALL YOUR\nFAVORITES" else title)
+                TrackArtwork(tracks.firstOrNull(), Modifier.widthIn(max = 250.dp).fillMaxWidth().aspectRatio(1f), if (kind == "liked") "ALL YOUR\nFAVORITES" else title)
                 Spacer(Modifier.height(22.dp))
                 Text(title, style = MaterialTheme.typography.headlineMedium, modifier = Modifier.fillMaxWidth())
                 Spacer(Modifier.height(7.dp))
                 Text(if (kind == "artist") "Artist · ${tracks.size} tracks" else "${tracks.size} tracks · ${durationLabel(tracks.sumOf { it.durationMs })}", color = Muted, modifier = Modifier.fillMaxWidth())
                 Row(Modifier.fillMaxWidth().padding(vertical = 18.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text(if (kind == "playlist" || kind == "liked") "Curated by you" else if (tracks.any { it.imported }) "From your collection" else "AMI Originals · demo music", color = Muted, modifier = Modifier.weight(1f))
+                    Text(if (kind == "playlist" || kind == "liked") "Curated by you" else if (tracks.any { it.imported || it.device }) "From your collection" else "AMI Originals · demo music", color = Muted, modifier = Modifier.weight(1f))
                     IconButton(enabled = tracks.isNotEmpty() && player.connected, onClick = { onShuffle(!player.shuffle) }) { Icon(Icons.Default.Shuffle, if (player.shuffle) "Turn shuffle off" else "Turn shuffle on", tint = if (player.shuffle) Lime else Muted) }
                     FilledIconButton(enabled = tracks.isNotEmpty() && player.connected, onClick = { onPlay(tracks, 0) }, modifier = Modifier.size(56.dp)) { Icon(Icons.Default.PlayArrow, "Play $title", Modifier.size(32.dp)) }
                 }

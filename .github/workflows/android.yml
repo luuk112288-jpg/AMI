@@ -41,6 +41,8 @@ jobs:
         with:
           node-version: '22'
       - run: node scripts/generate-audio.mjs && node --test scripts/audio.test.mjs && node scripts/verify-assets.mjs
+      - name: Generate tagged audio and embedded cover fixture
+        run: bash scripts/generate-test-fixture.sh
       - uses: actions/setup-java@v4
         with:
           distribution: temurin

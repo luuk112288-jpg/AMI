@@ -63,7 +63,7 @@ import com.ami.music.ui.theme.Muted
         if (artists.isNotEmpty()) {
             item { SectionTitle("Artists") }
             items(artists, key = { "artist-${it.artistId}" }) { track ->
-                ListItem(headlineContent = { Text(track.artist) }, supportingContent = { Text("Artist", color = Muted) }, leadingContent = { Artwork(track.artwork, Modifier.size(50.dp)) }, modifier = Modifier.clickable { onCollection("artist", track.artistId) })
+                ListItem(headlineContent = { Text(track.artist) }, supportingContent = { Text("Artist", color = Muted) }, leadingContent = { TrackArtwork(track, Modifier.size(50.dp)) }, modifier = Modifier.clickable { onCollection("artist", track.artistId) })
             }
         }
         if (playlists.isNotEmpty()) {

@@ -20,7 +20,7 @@ import com.ami.music.ui.theme.*
     val track = state.current ?: return
     Column(Modifier.padding(horizontal = 8.dp).clip(RoundedCornerShape(12.dp)).background(Panel).clickable(onClick = onOpen)) {
         Row(Modifier.padding(start = 8.dp, top = 7.dp, bottom = 7.dp), verticalAlignment = Alignment.CenterVertically) {
-            Artwork(track.artwork, Modifier.size(46.dp))
+            TrackArtwork(track, Modifier.size(46.dp))
             Column(Modifier.weight(1f).padding(horizontal = 10.dp)) {
                 Text(track.title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(track.artist, style = MaterialTheme.typography.bodySmall, color = Muted, maxLines = 1)

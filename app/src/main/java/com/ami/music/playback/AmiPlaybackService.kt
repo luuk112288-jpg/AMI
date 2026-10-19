@@ -44,7 +44,7 @@ class AmiPlaybackService : MediaSessionService() {
                     app.repository.ensureSeed()
                     val saved = app.preferences.read()
                     if (saved != null) {
-                        val byId = app.repository.dao.allTracks().associateBy { it.id }
+                        val byId = app.repository.dao.allTracks().filter { it.available }.associateBy { it.id }
                         val items = saved.ids.mapNotNull { byId[it] }
                         // All suspending reads finish before checking for new user commands.
                         if (items.isNotEmpty() && PlaybackPolicy.canRestore(player.mediaItemCount, player.playWhenReady)) {
@@ -93,4 +93,4 @@ class AmiPlaybackService : MediaSessionService() {
 }
 
 fun Track.toMediaItem(): MediaItem = MediaItem.Builder().setMediaId(id).setUri(sourceUri)
-    .setMediaMetadata(MediaMetadata.Builder().setTitle(title).setArtist(artist).setAlbumTitle(album).build()).build()
+    .setMediaMetadata(MediaMetadata.Builder().setTitle(title).setArtist(artist).setAlbumTitle(album).setAlbumArtist(albumArtist).setGenre(genre).setArtworkUri(artworkUri?.let { android.net.Uri.parse(it) }).build()).build()

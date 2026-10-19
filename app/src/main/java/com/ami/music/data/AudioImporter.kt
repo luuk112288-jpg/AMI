@@ -70,10 +70,13 @@ class AudioImporter(private val context: Context, private val repository: Librar
                     artist = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST)?.takeIf { it.isNotBlank() } ?: "Unknown artist"
                     album = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM)?.takeIf { it.isNotBlank() } ?: "Your imports"
                 } finally { metadata.release() }
+                val tags = readAudioTags(context, Uri.fromFile(workingFile))
                 val finalFile = File(directory, "$hash.audio")
                 val track = Track("local-$hash", title, "local-artist-${artist.lowercase()}", artist,
                     "local-album-${artist.lowercase()}-${album.lowercase()}", album, Uri.fromFile(finalFile).toString(), duration,
-                    artwork = hash.take(2).toInt(16) % 4, imported = true, fingerprint = hash)
+                    artwork = hash.take(2).toInt(16) % 4, imported = true, fingerprint = hash,
+                    artworkUri = tags.artworkUri, albumArtist = tags.albumArtist, genre = tags.genre, year = tags.year,
+                    trackNumber = tags.trackNumber, fileName = name, mimeType = tags.mimeType, bitrate = tags.bitrate, sizeBytes = size)
                 withContext(NonCancellable) {
                     require(workingFile.renameTo(finalFile)) { "Could not save the audio file." }
                     movedFile = finalFile

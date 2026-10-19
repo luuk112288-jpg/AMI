@@ -19,6 +19,17 @@ data class Track(
     val imported: Boolean = false,
     val fingerprint: String? = null,
     val addedAt: Long = System.currentTimeMillis(),
+    val artworkUri: String? = null,
+    @androidx.room.ColumnInfo(defaultValue = "0") val device: Boolean = false,
+    @androidx.room.ColumnInfo(defaultValue = "1") val available: Boolean = true,
+    val albumArtist: String? = null,
+    val genre: String? = null,
+    val year: String? = null,
+    val trackNumber: String? = null,
+    val fileName: String? = null,
+    val mimeType: String? = null,
+    val bitrate: String? = null,
+    val sizeBytes: Long? = null,
 )
 
 @Entity(tableName = "playlists")

@@ -1,6 +1,12 @@
 package com.ami.music.ui
 
 import android.net.Uri
+import android.content.Intent
+import android.provider.Settings
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -26,6 +32,20 @@ import com.ami.music.ui.theme.*
     val library by vm.library.collectAsStateWithLifecycle()
     val player by vm.player.collectAsStateWithLifecycle()
     val importing by vm.importing.collectAsStateWithLifecycle()
+    val scanning by vm.scanning.collectAsStateWithLifecycle()
+    val scanMessage by vm.scanMessage.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val permissionRequest = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) vm.scanPhone() else vm.musicPermissionDenied()
+    }
+    val scanPhone: () -> Unit = { if (DeviceMusicScanner.hasPermission(context)) vm.scanPhone() else permissionRequest.launch(DeviceMusicScanner.permission()) }
+    DisposableEffect(lifecycle, vm) {
+        val observer = LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_RESUME && DeviceMusicScanner.hasPermission(context)) vm.scanPhone() }
+        lifecycle.addObserver(observer)
+        if (lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) && DeviceMusicScanner.hasPermission(context)) vm.scanPhone()
+        onDispose { lifecycle.removeObserver(observer) }
+    }
     val ready by vm.ready.collectAsStateWithLifecycle()
     val startupError by vm.startupError.collectAsStateWithLifecycle()
     val nav = rememberNavController()
@@ -81,7 +101,7 @@ import com.ami.music.ui.theme.*
         } else NavHost(navController = nav, startDestination = "home", modifier = Modifier.fillMaxSize().padding(padding)) {
             composable("home") { HomeScreen(library, player, collection, vm.playback::playTracks, row, { about = true }, goSearch) }
             composable("search") { SearchScreen(library, collection, row) }
-            composable("library") { LibraryScreen(library, importing, collection, { create = true }, { importPrompt = true }, row) }
+            composable("library") { LibraryScreen(library, importing, collection, { create = true }, { importPrompt = true }, scanning, scanMessage, scanPhone, { context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}"))) }, row) }
             composable("collection/{kind}/{id}", arguments = listOf(navArgument("kind") { type = NavType.StringType }, navArgument("id") { type = NavType.StringType })) { target ->
                 val kind = target.arguments?.getString("kind") ?: "album"
                 val id = target.arguments?.getString("id") ?: ""
@@ -94,7 +114,7 @@ import com.ami.music.ui.theme.*
         }
     }
     if (about) AlertDialog(onDismissRequest = { about = false }, title = { Text("Your little world of music.") }, text = {
-        Text("AMI 0.1\n\nA home for your favorite sounds. Listen to original demo tracks or bring your own audio.\n\nYour library stays on this device. No account needed.\n\nAMI is an independent app. Demo artist names are fictional; the included music was composed for this project.")
+        Text("AMI 0.2 — Artificial Music Intelligence\n\nA home for your favorite sounds. Listen to original demo tracks or bring your own audio.\n\nYour library stays on this device. Scan your phone for local music and album artwork. No account needed.\n\nAMI is an independent app. Demo artist names are fictional; the included music was composed for this project.")
     }, confirmButton = { TextButton(onClick = { about = false }) { Text("Keep listening") } })
     if (importPrompt) AlertDialog(onDismissRequest = { importPrompt = false }, title = { Text("Bring your music") }, text = {
         Text("Choose audio files from your phone (up to 512 MB each). AMI saves a private copy on this device so you can listen offline. Uninstalling the app removes those copies.")

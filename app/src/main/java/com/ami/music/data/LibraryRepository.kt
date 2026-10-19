@@ -17,13 +17,19 @@ class LibraryRepository(private val database: AmiDatabase) {
     private val seedMutex = Mutex()
     private var seeded = false
     val state: Flow<LibraryState> = combine(dao.tracks(), dao.playlists(), dao.entries(), dao.likes(), dao.history()) { tracks, playlists, entries, likes, history ->
-        LibraryState(tracks, playlists, entries, likes.map { it.trackId }.toSet(), history.map { it.trackId })
+        LibraryState(tracks.filter { it.available }, playlists, entries, likes.map { it.trackId }.toSet(), history.map { it.trackId })
     }.retryWhen { _, _ ->
         emit(LibraryState(error = "Your library could not be read. Check free storage and try again."))
         delay(3000)
         true
     }
     fun observeTracks() = dao.tracks()
+    suspend fun syncDeviceTracks(tracks: List<Track>) = database.withTransaction {
+        require(tracks.all { it.device })
+        val previous = dao.allTracks().associateBy { it.id }
+        dao.markDeviceTracksUnavailable()
+        dao.upsertTracks(tracks.map { it.copy(available = true, addedAt = previous[it.id]?.addedAt ?: it.addedAt) })
+    }
     fun observePlaylists() = dao.playlists()
     suspend fun ensureSeed() = seedMutex.withLock {
         if (!seeded) { dao.insertTracks(DemoCatalog.tracks()); seeded = true }

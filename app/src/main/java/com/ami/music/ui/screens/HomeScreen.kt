@@ -11,6 +11,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import com.ami.music.R
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,8 +41,11 @@ import com.ami.music.ui.theme.*
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp)) {
         item {
             Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("AMI", color = Lime, fontSize = 29.sp, fontWeight = FontWeight.Black, letterSpacing = (-1.6).sp)
-                Text(" / MUSIC FOR YOU", color = Muted, fontSize = 10.sp, letterSpacing = 1.sp, modifier = Modifier.weight(1f).padding(start = 10.dp))
+                Image(painterResource(R.drawable.ami_logo), "AMI — Artificial Music Intelligence", Modifier.size(48.dp).clip(RoundedCornerShape(12.dp)))
+                Column(Modifier.weight(1f).padding(start = 10.dp)) {
+                    Text("AMI", color = Lime, fontSize = 27.sp, fontWeight = FontWeight.Black)
+                    Text("Artificial Music Intelligence", color = Muted, fontSize = 9.sp)
+                }
                 IconButton(onClick = onSearch) { Icon(Icons.Default.Search, "Search music") }
                 FilledTonalIconButton(onClick = onAbout, modifier = Modifier.size(38.dp), shape = CircleShape) { Text("A", fontWeight = FontWeight.Bold) }
             }
@@ -83,7 +89,7 @@ import com.ami.music.ui.theme.*
             LazyRow(contentPadding = PaddingValues(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(18.dp)) {
                 items(library.tracks.distinctBy { it.artistId }, key = { it.artistId }) { track ->
                     Column(Modifier.width(115.dp).clickable { onCollection("artist", track.artistId) }, horizontalAlignment = Alignment.CenterHorizontally) {
-                        Artwork(track.artwork, Modifier.size(110.dp).clip(CircleShape))
+                        TrackArtwork(track, Modifier.size(110.dp).clip(CircleShape))
                         Spacer(Modifier.height(10.dp))
                         Text(track.artist, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         Text("Artist", color = Muted, fontSize = 12.sp)
@@ -97,7 +103,7 @@ import com.ami.music.ui.theme.*
 
 @Composable fun AlbumCard(track: Track, onClick: () -> Unit) {
     Column(Modifier.width(155.dp).clickable(onClick = onClick)) {
-        Artwork(track.artwork, Modifier.size(155.dp), track.album)
+        TrackArtwork(track, Modifier.size(155.dp), track.album)
         Spacer(Modifier.height(10.dp))
         Text(track.album, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
         Text(track.artist, color = Muted, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)

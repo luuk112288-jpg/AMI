@@ -39,6 +39,16 @@ class AudioImporterTest {
         assertTrue(repository.dao.allTracks().isEmpty())
         assertTrue(audioDirectory.listFiles().orEmpty().none { it.extension == "partial" })
     }
+    @Test fun importedSongKeepsEmbeddedCoverAndTags() = runBlocking {
+        val file = File.createTempFile("tags", ".mp3", context.cacheDir).also { created += it }
+        androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().context.assets.open("tagged.mp3").use { input -> file.outputStream().use { input.copyTo(it) } }
+        assertTrue(importer.importAudio(Uri.fromFile(file)) is ImportResult.Success)
+        val track = repository.dao.allTracks().single()
+        assertEquals("Phone Test Album", track.album)
+        assertEquals("Various Test Artists", track.albumArtist)
+        assertNotNull(track.artworkUri)
+        context.contentResolver.openInputStream(Uri.parse(track.artworkUri))!!.use { assertTrue(it.read() >= 0) }
+    }
     @Test fun duplicateImportDoesNotDuplicateAndPrivateCopySurvives() = runBlocking {
         val file = File.createTempFile("demo", ".wav", context.cacheDir).also { created += it }
         context.assets.open("audio/demo-0.wav").use { input -> file.outputStream().use { input.copyTo(it) } }
