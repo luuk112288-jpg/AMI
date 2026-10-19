@@ -1,11 +1,17 @@
 # AMI
 
-A native Android music app with a dark, lime-accented interface, original demo music, and a private on-device library.
+AMI — Artificial Music Intelligence. A native Android music app with a dark, lime-accented interface, local phone music, embedded album artwork, original demo music, and a private on-device library.
 
-**Delivery status:** APK compiled successfully; JVM unit tests and all 14 Android instrumentation tests passed on API 35. [Download the APK ZIP](https://github.com/luuk112288-jpg/AMI/actions/runs/39267528097/artifacts/12193863155) (GitHub sign-in required). Extract and install `app-debug.apk`. REA has not run; see `docs/rea-investigation.md`.
+**Delivery status — AMI 0.2.0:** APK compiled successfully; JVM unit tests and all 21 Android instrumentation tests passed on API 35. [Download the APK ZIP](https://github.com/luuk112288-jpg/AMI/actions/runs/39275146863/artifacts/12197625959) (GitHub sign-in required). Extract and install `app-debug.apk`. REA has not run; see `docs/rea-investigation.md`.
 
-## Features in source
+## Features
 
+- Scan phone audio through Android MediaStore after granting Music and audio access (storage access on Android 8–12).
+- Play scanned files in place without copying or modifying the originals; refresh automatically when returning to AMI, or tap Scan phone.
+- Embedded album covers across tracks, albums, queue, mini player and full player; metadata is also supplied to the media session.
+- Song details show available title, artist, album, album artist, year, genre, track number, duration, filename, format, bitrate and size.
+- Database upgrade and metadata enrichment preserve earlier imports, likes and playlist entries.
+- New generated AMI monogram launcher icon and Artificial Music Intelligence branding.
 - Home with album collections, artists, and recent listening.
 - Search across tracks, artists, albums, and playlists.
 - Persistent playlists, ordering, liked songs, and playback preferences.
@@ -44,13 +50,15 @@ gradle :app:connectedDebugAndroidTest
 gradle wrapper --gradle-version 8.11.1 --distribution-type bin
 ```
 
-The GitHub Actions workflow builds an APK and runs emulator tests. Both jobs passed in [run 39267528097](https://github.com/luuk112288-jpg/AMI/actions/runs/39267528097).
+The GitHub Actions workflow builds an APK and runs emulator tests. Both jobs passed in [run 39275146863](https://github.com/luuk112288-jpg/AMI/actions/runs/39275146863).
 
 ## Use AMI
 
-Start with the bundled AMI Originals. Tap any track, album play button, or collection to listen. The mini player opens Now playing; the queue icon opens track ordering and removal. In Your library, use **+** for a playlist and **Import audio** for local files. The track menu adds music to a playlist or opens an artist/album. Hearts populate Liked songs. Playlist options support rename and delete; up/down controls change track order.
+Open **Your library → Scan phone** and allow **Music and audio** access. **On device** lists your phone's songs; Albums and Artists group them. Use a track's menu → **Song details** for its tags. Original files are never changed or copied by scanning. If Android has not indexed a download, use **Import audio** to select it explicitly. Missing tags or embedded covers use neutral fallbacks. Protected offline downloads inside streaming apps are not ordinary accessible audio files.
 
-Audio files must contain a decoder-supported audio stream and be at most 512 MB each. The Android media decoder determines format support. AMI copies selected files into app-private storage and detects duplicate content with SHA-256. It does not scan your device or request broad storage access.
+You can also start with the bundled AMI Originals. Tap any track, album play button, or collection to listen. The mini player opens Now playing; the queue icon opens track ordering and removal. In Your library, use **+** for a playlist and **Import audio** for local files. The track menu adds music to a playlist or opens an artist/album. Hearts populate Liked songs. Playlist options support rename and delete; up/down controls change track order.
+
+Audio files must contain a decoder-supported audio stream and be at most 512 MB each. The Android media decoder determines format support. AMI copies selected files into app-private storage and detects duplicate content with SHA-256. Manual import remains available without broad audio permission. Phone scanning requests only Android's audio-read permission, not all-files access.
 
 ## REA
 
@@ -87,3 +95,9 @@ The source ZIP includes the original PCM files. GitHub checkouts generate them f
 
 
 GitHub checkouts generate the original demo audio with `node scripts/generate-audio.mjs` before building. GitHub Actions performs this automatically.
+
+## Testing local-file metadata
+
+The device workflow installs FFmpeg and runs `bash scripts/generate-test-fixture.sh` to create a two-second original tone with synthetic metadata and the AMI cover. Run this before local instrumentation tests. Tests cover metadata extraction, private cover access, scanned content-URI playback, rescan deduplication, likes/playlist preservation, existing-import enrichment and database migration.
+
+Debug builds use a development signing key. Android only permits an in-place upgrade when both APKs share a signing key; builds from separate fresh runners may require a fresh install. Uninstalling removes AMI's private imports/playlists, but leaves scanned original music files untouched. Production distribution requires a persistent private signing key.

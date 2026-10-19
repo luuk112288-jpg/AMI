@@ -1,27 +1,27 @@
-# Verification status
+# AMI 0.2.0 verification — 2026-10-19
 
-## Verified build — 2026-10-19
+Source commit: c8c667abf630dac68c90a748f54f032c4346e890.
+[Successful GitHub Actions run](https://github.com/luuk112288-jpg/AMI/actions/runs/39275146863).
 
-Source commit: db2d94c881eeaed053f6c008c58dff9c81cb283d.
-[GitHub Actions run](https://github.com/luuk112288-jpg/AMI/actions/runs/39267528097).
+- APK build and all JVM unit tests passed.
+- All 21 Android instrumentation tests passed on Android 15 / API 35.
+- Tests cover phone MediaStore scanning, embedded title/artist/album/album artist/year/genre/artwork, duplicate prevention after rescan, scanned content-URI preparation in ExoPlayer, retained playlist/like relationships when files disappear and return, fresh-import artwork, existing-import metadata enrichment, v1-to-v2 database migration, navigation/branding and the existing playback/library features.
+- Two Node audio tests and eight demo asset validations passed.
+- Two new UI tests failed on the old implementation before implementation, as expected, and pass on this build.
+- Independent read-only review identified two issues: URI-volume mismatch in the test and missing enrichment of earlier imports. Both were addressed and the final suite passed.
+- The first device build stopped because FFmpeg was absent; the workflow now explicitly installs it before generating its synthetic tagged audio fixture.
 
-- APK job: successful. Gradle :app:testDebugUnitTest :app:assembleDebug completed successfully.
-- Device job: successful. All 14 instrumentation tests completed on Android 15 / API 35.
-- Two Node audio tests passed; all eight generated demo audio assets passed validation.
-- Debug APK artifact: AMI-debug-apk, 34,180,268 bytes as ZIP.
-- Artifact ZIP SHA-256: bceef5a5959fc960de077a9a9977c5307f0612ca472bd604e143aaa1433d45c0.
-- [Download](https://github.com/luuk112288-jpg/AMI/actions/runs/39267528097/artifacts/12193863155). GitHub sign-in required; extract app-debug.apk.
-- Initial CI attempt failed because SDK setup requested the removed tools package. Explicit platform-tools selection fixed this; the next full run passed.
+APK ZIP: AMI-debug-apk, 35,159,737 bytes.
+SHA-256: c376a627ad89efc021905ed532f94ca47725b7b6e5bf5e6c3ea511f98604219d.
+[Download](https://github.com/luuk112288-jpg/AMI/actions/runs/39275146863/artifacts/12197625959).
 
-The APK is development-signed, not a production release or Play Store submission.
+The APK is development-signed. It is not a Play Store/production release. Signing keys from fresh CI runners can differ, preventing in-place updates; uninstalling removes AMI's private library/imports but does not remove the original scanned audio. Production distribution needs a persistent signing key.
 
-## Earlier local validation
+## Remaining manual/device checks
 
-Audio generation/tests, XML parsing, PowerShell syntax checks, and independent source review completed locally. Local Android compilation was unavailable; the verified Android results above come from GitHub Actions.
+- API 26–32 storage permissions and vendor-specific media providers.
+- Real-device permission denial/settings return, headphone/audio-focus behavior and lock-screen display.
+- Very large libraries, low-storage conditions, TalkBack and 200% font scale.
+- REA investigation remains unexecuted; this update makes no Spotify integration or REA-derived behavior claim.
 
-## Remaining acceptance checks
-
-- API 26 devices, physical-device audio, notification/lock-screen controls, audio-focus interruptions and headphone disconnect.
-- Process-death restoration, cancellation during a real Room commit, low-storage/provider failures and recovery.
-- 200% font scale, TalkBack, tablets, narrow phones and landscape.
-- The requested REA investigation has not run. See rea-investigation.md. No Spotify integration or reverse-engineered behavior is claimed.
+The phone scanner requests audio-read permission and queries MediaStore. It does not copy, modify or delete original audio. Unindexed downloads can be selected through the existing document-picker import flow. Embedded cover/tag availability depends on the user's files.
