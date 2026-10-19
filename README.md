@@ -83,3 +83,6 @@ node scripts/generate-audio.mjs
 ```
 
 The original PCM files are already included. See `ATTRIBUTION.md` for asset provenance.
+
+
+GitHub checkouts generate the original demo audio with `node scripts/generate-audio.mjs` before building. GitHub Actions performs this automatically.
