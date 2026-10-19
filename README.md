@@ -2,7 +2,7 @@
 
 A native Android music app with a dark, lime-accented interface, original demo music, and a private on-device library.
 
-**Delivery status:** Source implementation provided. No APK has been compiled in the authoring environment. Kotlin tests and device tests are included but have not run. REA has not run. See `docs/verification.md` and `docs/rea-investigation.md` for the exact limits.
+**Delivery status:** APK compiled successfully; JVM unit tests and all 14 Android instrumentation tests passed on API 35. [Download the APK ZIP](https://github.com/luuk112288-jpg/AMI/actions/runs/39267528097/artifacts/12193863155) (GitHub sign-in required). Extract and install `app-debug.apk`. REA has not run; see `docs/rea-investigation.md`.
 
 ## Features in source
 
@@ -24,6 +24,7 @@ Requires Android 8.0 (API 26) or newer. Package name: `com.ami.music`. The initi
 3. From a PowerShell terminal in this directory:
 
 ```powershell
+node scripts/generate-audio.mjs
 pwsh -File scripts/build.ps1
 ```
 
@@ -43,7 +44,7 @@ gradle :app:connectedDebugAndroidTest
 gradle wrapper --gradle-version 8.11.1 --distribution-type bin
 ```
 
-The included GitHub Actions workflow can build an APK and run emulator tests after the project is placed in a GitHub repository. It has not been executed in this conversation.
+The GitHub Actions workflow builds an APK and runs emulator tests. Both jobs passed in [run 39267528097](https://github.com/luuk112288-jpg/AMI/actions/runs/39267528097).
 
 ## Use AMI
 
@@ -75,14 +76,14 @@ Review the evidence and amend `docs/rea-investigation.md` with actual findings b
 
 ## Regenerate demo audio
 
-Node.js is only needed for this development helper; it is not an Android build or runtime dependency.
+Node.js is needed to generate demo assets in a GitHub checkout before building; it is not an Android runtime dependency.
 
 ```text
 node --test scripts/audio.test.mjs
 node scripts/generate-audio.mjs
 ```
 
-The original PCM files are already included. See `ATTRIBUTION.md` for asset provenance.
+The source ZIP includes the original PCM files. GitHub checkouts generate them from the deterministic source. See `ATTRIBUTION.md` for asset provenance.
 
 
 GitHub checkouts generate the original demo audio with `node scripts/generate-audio.mjs` before building. GitHub Actions performs this automatically.
