@@ -1,0 +1,45 @@
+name: Audius public API compatibility
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    paths: [".github/workflows/audius-probe.yml"]
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check metadata and a public stream
+        shell: python
+        run: |
+          import urllib.request, urllib.parse, json, time
+          base = "https://api.audius.co/v1"
+          def fetch(url):
+              req = urllib.request.Request(url, headers={"User-Agent":"AMI/0.3.0"})
+              with urllib.request.urlopen(req, timeout=30) as r:
+                  return json.load(r)
+          data = fetch(base + "/tracks/trending?limit=10&app_name=AMI")
+          tracks = data.get("data", [])
+          assert tracks, "Empty trending response"
+          print("FIRST_TRACK", json.dumps(tracks[0])[:16000])
+          search = fetch(base + "/tracks/search?query=ambient&limit=3&app_name=AMI")
+          assert isinstance(search.get("data"), list)
+          print("SEARCH_COUNT", len(search["data"]))
+          public = [t for t in tracks if t.get("is_streamable") and not t.get("is_stream_gated") and not t.get("is_download_gated") and not t.get("is_unlisted")]
+          assert public, "No public candidates"
+          successes = 0
+          for track in public[:3]:
+              try:
+                  url = base + "/tracks/" + track["id"] + "/stream?app_name=AMI"
+                  req = urllib.request.Request(url, headers={"Range":"bytes=0-4095","User-Agent":"AMI/0.3.0"})
+                  with urllib.request.urlopen(req, timeout=30) as r:
+                      prefix = r.read(4096)
+                      mime = r.headers.get("Content-Type","")
+                      assert len(prefix) > 100 and ("audio" in mime or "octet-stream" in mime), (mime,len(prefix))
+                      print("STREAM_OK", track["id"], mime, len(prefix), urllib.parse.urlparse(r.url).hostname)
+                      successes += 1
+                      break
+              except Exception as e:
+                  print("STREAM_CANDIDATE_UNAVAILABLE", track["id"], str(e))
+          assert successes, "No public stream could be opened"

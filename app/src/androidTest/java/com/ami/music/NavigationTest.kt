@@ -22,6 +22,13 @@ class NavigationTest {
         waitForHome()
         compose.onNodeWithContentDescription("AMI — Artificial Music Intelligence").assertIsDisplayed()
     }
+    @Test fun searchOffersOnlineDiscoveryAlongsideLocalMusic() {
+        waitForHome()
+        compose.onNodeWithContentDescription("Search music").performClick()
+        compose.onNodeWithText("Online").performClick()
+        compose.onNodeWithText("Discover on Audius").assertIsDisplayed()
+        compose.onNodeWithText("On device").assertIsDisplayed()
+    }
     @Test fun searchFiltersEntities() {
         waitForHome()
         compose.onNodeWithContentDescription("Search music").performClick()
