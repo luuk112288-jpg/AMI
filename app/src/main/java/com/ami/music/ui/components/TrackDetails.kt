@@ -19,7 +19,7 @@ import com.ami.music.ui.theme.Muted
                 "File" to track.fileName, "Format" to track.mimeType,
                 "Bitrate" to track.bitrate?.toLongOrNull()?.let { "${it / 1000} kbps" },
                 "Size" to track.sizeBytes?.let { "${"%.1f".format(it / 1048576.0)} MB" },
-                "Source" to if (track.device) "On your phone" else if (track.imported) "Imported copy" else "AMI Originals")
+                "Source" to if (track.provider == "audius") "Audius · online stream" else if (track.device) "On your phone" else if (track.imported) "Imported copy" else "AMI Originals")
                 .filter { !it.second.isNullOrBlank() }.forEach { (name, value) ->
                     Column { Text(name, color = Muted, style = MaterialTheme.typography.labelSmall); Text(value.orEmpty()) }
                 }

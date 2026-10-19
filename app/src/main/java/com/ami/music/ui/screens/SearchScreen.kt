@@ -18,6 +18,25 @@ import com.ami.music.ui.theme.Muted
 
 @Composable fun SearchScreen(
     library: LibraryState, onCollection: (String, String) -> Unit,
+    catalog: CatalogUiState, onOpenOnline: () -> Unit, onQueryOnline: (String) -> Unit,
+    onRetryOnline: () -> Unit, onMoreOnline: () -> Unit,
+    trackRow: @Composable (Track, List<Track>, Int) -> Unit,
+) {
+    var online by rememberSaveable { mutableStateOf(false) }
+    Column(Modifier.fillMaxSize()) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            FilterChip(selected = !online, onClick = { online = false }, label = { Text("On device") })
+            FilterChip(selected = online, onClick = { online = true; onOpenOnline() }, label = { Text("Online") }, leadingIcon = { Icon(Icons.Default.Public, null, Modifier.size(16.dp)) })
+        }
+        Box(Modifier.weight(1f)) {
+            if (online) AudiusScreen(catalog, onQueryOnline, onRetryOnline, onMoreOnline, trackRow)
+            else LocalSearchScreen(library.copy(tracks = library.tracks.filter { it.provider == null }), onCollection, trackRow)
+        }
+    }
+}
+
+@Composable private fun LocalSearchScreen(
+    library: LibraryState, onCollection: (String, String) -> Unit,
     trackRow: @Composable (Track, List<Track>, Int) -> Unit,
 ) {
     var query by rememberSaveable { mutableStateOf("") }

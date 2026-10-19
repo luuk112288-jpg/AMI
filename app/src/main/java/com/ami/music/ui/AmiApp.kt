@@ -4,6 +4,7 @@ import android.net.Uri
 import android.content.Intent
 import android.provider.Settings
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -31,6 +32,9 @@ import com.ami.music.ui.theme.*
 @Composable fun AmiApp(vm: AmiViewModel) {
     val library by vm.library.collectAsStateWithLifecycle()
     val player by vm.player.collectAsStateWithLifecycle()
+    val catalog by vm.catalog.collectAsStateWithLifecycle()
+    val uriHandler = LocalUriHandler.current
+    fun openSource(url: String?) { if (url != null) runCatching { uriHandler.openUri(url) } }
     val importing by vm.importing.collectAsStateWithLifecycle()
     val scanning by vm.scanning.collectAsStateWithLifecycle()
     val scanMessage by vm.scanMessage.collectAsStateWithLifecycle()
@@ -68,8 +72,8 @@ import com.ami.music.ui.theme.*
     val row: @Composable (Track, List<Track>, Int) -> Unit = { track, queue, index ->
         val currentPlaylist = if (entry?.arguments?.getString("kind") == "playlist") entry?.arguments?.getString("id") else null
         TrackRow(track, player.current?.id == track.id, track.id in library.likedIds,
-            onPlay = { vm.playback.playTracks(queue, index) }, onLike = { vm.like(track) }, onAdd = { add = track },
-            onAlbum = { collection("album", track.albumId) }, onArtist = { collection("artist", track.artistId) },
+            onPlay = { vm.playTracks(queue, index) }, onLike = { vm.like(track) }, onAdd = { add = track },
+            onAlbum = { if (track.provider == "audius") openSource(track.externalUrl) else collection("album", track.albumId) }, onArtist = { if (track.provider == "audius") openSource(track.artistUrl) else collection("artist", track.artistId) },
             onRemove = currentPlaylist?.let { id -> { vm.removeFromPlaylist(id, track); Unit } })
     }
     Scaffold(
@@ -99,22 +103,22 @@ import com.ami.music.ui.theme.*
                 }
             }
         } else NavHost(navController = nav, startDestination = "home", modifier = Modifier.fillMaxSize().padding(padding)) {
-            composable("home") { HomeScreen(library, player, collection, vm.playback::playTracks, row, { about = true }, goSearch) }
-            composable("search") { SearchScreen(library, collection, row) }
+            composable("home") { HomeScreen(library, player, collection, vm::playTracks, row, { about = true }, goSearch) }
+            composable("search") { SearchScreen(library, collection, catalog, vm::openCatalog, vm::searchCatalog, vm::retryCatalog, vm::moreCatalog, row) }
             composable("library") { LibraryScreen(library, importing, collection, { create = true }, { importPrompt = true }, scanning, scanMessage, scanPhone, { context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}"))) }, row) }
             composable("collection/{kind}/{id}", arguments = listOf(navArgument("kind") { type = NavType.StringType }, navArgument("id") { type = NavType.StringType })) { target ->
                 val kind = target.arguments?.getString("kind") ?: "album"
                 val id = target.arguments?.getString("id") ?: ""
-                CollectionScreen(kind, id, library, player, back, vm.playback::playTracks, vm.playback::setShuffle,
+                CollectionScreen(kind, id, library, player, back, vm::playTracks, vm.playback::setShuffle,
                     { rename = it }, { delete = it }, goSearch,
                     { trackId, delta -> vm.movePlaylistTrack(id, trackId, delta) }, row)
             }
-            composable("player") { NowPlayingScreen(player, library, vm.playback, back, { nav.navigate("queue") }, { vm.like(it) }, { add = it }, { collection("artist", it.artistId) }) }
+            composable("player") { NowPlayingScreen(player, library, vm.playback, back, { nav.navigate("queue") }, { vm.like(it) }, { add = it }, { if (it.provider == "audius") openSource(it.artistUrl) else collection("artist", it.artistId) }) }
             composable("queue") { QueueScreen(player, vm.playback, back) }
         }
     }
     if (about) AlertDialog(onDismissRequest = { about = false }, title = { Text("Your little world of music.") }, text = {
-        Text("AMI 0.2 — Artificial Music Intelligence\n\nA home for your favorite sounds. Listen to original demo tracks or bring your own audio.\n\nYour library stays on this device. Scan your phone for local music and album artwork. No account needed.\n\nAMI is an independent app. Demo artist names are fictional; the included music was composed for this project.")
+        Text("AMI 0.3 — Artificial Music Intelligence\n\nA home for your favorite sounds. Listen to original demo tracks or bring your own audio.\n\nYour library stays on this device. Scan your phone for local music, or explore public tracks from Audius in Search → Online. Online music and artwork use internet data and connect to Audius and its content nodes. No Spotify account needed.\n\nAMI is an independent app. Demo artist names are fictional; the included music was composed for this project.")
     }, confirmButton = { TextButton(onClick = { about = false }) { Text("Keep listening") } })
     if (importPrompt) AlertDialog(onDismissRequest = { importPrompt = false }, title = { Text("Bring your music") }, text = {
         Text("Choose audio files from your phone (up to 512 MB each). AMI saves a private copy on this device so you can listen offline. Uninstalling the app removes those copies.")

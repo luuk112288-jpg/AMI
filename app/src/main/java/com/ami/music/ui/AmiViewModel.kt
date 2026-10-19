@@ -10,6 +10,8 @@ import com.ami.music.playback.PlaybackConnection
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 
 class AmiViewModel(application: Application) : AndroidViewModel(application) {
     private val app = application as AmiApplication
@@ -17,6 +19,30 @@ class AmiViewModel(application: Application) : AndroidViewModel(application) {
     val library = repository.state.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), LibraryState())
     val playback = PlaybackConnection(application, repository)
     val player = playback.state
+    private val catalogClient = AudiusCatalog()
+    private val mutableCatalog = MutableStateFlow(CatalogUiState())
+    val catalog = mutableCatalog.asStateFlow()
+    private var catalogJob: Job? = null
+    fun openCatalog() { if (!mutableCatalog.value.loaded && !mutableCatalog.value.loading) loadCatalog(mutableCatalog.value.query) }
+    fun searchCatalog(query: String) { loadCatalog(query.take(200), debounce = true) }
+    fun retryCatalog() { loadCatalog(mutableCatalog.value.query) }
+    fun moreCatalog() { if (!mutableCatalog.value.loading && mutableCatalog.value.hasMore) loadCatalog(mutableCatalog.value.query, append = true) }
+    private fun loadCatalog(query: String, append: Boolean = false, debounce: Boolean = false) {
+        catalogJob?.cancel()
+        val previous = mutableCatalog.value
+        val offset = if (append) previous.nextOffset else 0
+        mutableCatalog.value = previous.copy(query = query, tracks = if (append) previous.tracks else emptyList(), loading = true, error = null, hasMore = if (append) previous.hasMore else false)
+        catalogJob = viewModelScope.launch {
+            try {
+                if (debounce) delay(450)
+                val page = catalogClient.load(query, offset)
+                mutableCatalog.value = CatalogUiState(query, ((if (append) previous.tracks else emptyList()) + page.tracks).distinctBy { it.id },
+                    nextOffset = page.nextOffset, hasMore = page.hasMore, loaded = true)
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (error: Exception) { mutableCatalog.value = mutableCatalog.value.copy(loading = false, loaded = true, error = error.message ?: "Online music is unavailable. Please retry.") }
+        }
+    }
+    fun playTracks(tracks: List<Track>, index: Int) { launchAction { repository.cacheOnlineTracks(tracks); playback.playTracks(tracks, index) } }
     private val mutableMessages = MutableSharedFlow<String>(extraBufferCapacity = 10)
     val messages = mutableMessages.asSharedFlow()
     private val mutableImporting = MutableStateFlow(false)
@@ -62,11 +88,12 @@ class AmiViewModel(application: Application) : AndroidViewModel(application) {
         catch (cancelled: CancellationException) { throw cancelled }
         catch (failure: Exception) { mutableMessages.emit(failure.message ?: "Something went wrong. Please try again.") }
     }
-    fun like(track: Track) = launchAction { repository.setLiked(track.id, track.id !in library.value.likedIds) }
+    fun like(track: Track) = launchAction { repository.cacheOnlineTracks(listOf(track)); repository.setLiked(track.id, track.id !in library.value.likedIds) }
     fun createPlaylist(name: String, onCreated: (String) -> Unit) = launchAction { onCreated(repository.createPlaylist(name)) }
     fun renamePlaylist(id: String, name: String) = launchAction { repository.renamePlaylist(id, name) }
     fun deletePlaylist(id: String, onDeleted: () -> Unit) = launchAction { repository.deletePlaylist(id); onDeleted() }
     fun addToPlaylist(id: String, track: Track) = launchAction {
+        repository.cacheOnlineTracks(listOf(track))
         repository.addToPlaylist(id, track.id)
         mutableMessages.emit("Added to playlist")
     }

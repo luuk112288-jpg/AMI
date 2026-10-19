@@ -37,7 +37,7 @@ fun durationLabel(ms: Long): String {
             Text(track.title, color = if (active) Lime else MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (active) { Icon(Icons.Default.GraphicEq, "Current track", tint = Lime, modifier = Modifier.size(14.dp)); Spacer(Modifier.width(5.dp)) }
-                Text(track.artist, color = Muted, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(if (track.provider == "audius") "${track.artist} · Audius" else track.artist, color = Muted, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
         IconButton(onClick = onLike) { Icon(if (liked) Icons.Default.Favorite else Icons.Default.FavoriteBorder, if (liked) "Unlike ${track.title}" else "Like ${track.title}", tint = if (liked) Lime else Muted, modifier = Modifier.size(20.dp)) }
@@ -45,8 +45,8 @@ fun durationLabel(ms: Long): String {
             IconButton(onClick = { menu = true }) { Icon(Icons.Default.MoreVert, "More options for ${track.title}", tint = Muted) }
             DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                 DropdownMenuItem(text = { Text("Add to playlist") }, onClick = { menu = false; onAdd() })
-                DropdownMenuItem(text = { Text("Go to album") }, onClick = { menu = false; onAlbum() })
-                DropdownMenuItem(text = { Text("Go to artist") }, onClick = { menu = false; onArtist() })
+                DropdownMenuItem(text = { Text(if (track.provider == "audius") "View release on Audius" else "Go to album") }, onClick = { menu = false; onAlbum() })
+                DropdownMenuItem(text = { Text(if (track.provider == "audius") "View artist on Audius" else "Go to artist") }, onClick = { menu = false; onArtist() })
                 DropdownMenuItem(text = { Text("Song details") }, onClick = { menu = false; details = true })
                 if (onRemove != null) DropdownMenuItem(text = { Text("Remove from playlist") }, onClick = { menu = false; onRemove() })
             }

@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 class AmiApplication : Application() {
     val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     val playbackSnapshots = Channel<SavedPlayback>(Channel.CONFLATED)
-    val database by lazy { Room.databaseBuilder(this, AmiDatabase::class.java, "ami-library.db").addMigrations(AmiDatabase.MIGRATION_1_2).build() }
+    val database by lazy { Room.databaseBuilder(this, AmiDatabase::class.java, "ami-library.db").addMigrations(AmiDatabase.MIGRATION_1_2, AmiDatabase.MIGRATION_2_3).build() }
     val repository by lazy { LibraryRepository(database) }
     val preferences by lazy { PlaybackPreferences(this) }
     val importer by lazy { AudioImporter(this, repository) }

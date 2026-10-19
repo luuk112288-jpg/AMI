@@ -40,6 +40,19 @@ class LibraryRepositoryTest {
         repository.ensureSeed(); repository.ensureSeed()
         assertEquals(8, repository.dao.allTracks().size)
     }
+    @Test fun onlineQueueCacheDoesNotFillLibraryUntilSavedAndSurvivesPhoneScan() = runBlocking {
+        val track = Track("audius-test", "Online", "audius-a", "Artist", "audius-b", "Release", "https://api.audius.co/v1/tracks/test/stream?app_name=AMI", 1000, provider = "audius")
+        repository.cacheOnlineTracks(listOf(track))
+        assertTrue(repository.state.first().tracks.isEmpty())
+        repository.setLiked(track.id, true)
+        assertEquals(track.id, repository.state.first().tracks.single().id)
+        repository.syncDeviceTracks(emptyList())
+        assertTrue(repository.dao.track(track.id)!!.available)
+        val playlist = repository.createPlaylist("Mixed music")
+        repository.addToPlaylist(playlist, track.id)
+        repository.setLiked(track.id, false)
+        assertEquals(track.id, repository.state.first().playlistTracks(playlist).single().id)
+    }
     @Test fun consecutiveRemovalsUseCurrentDatabaseEntries() = runBlocking {
         repository.ensureSeed()
         val id = repository.createPlaylist("Edits")

@@ -21,6 +21,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.ami.music.data.Track
+import com.ami.music.data.MusicHttp
+import com.ami.music.data.safeRemoteImage
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import com.ami.music.ui.theme.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Semaphore
@@ -33,7 +36,7 @@ private val coverCache = object : LruCache<String, Bitmap>(16 * 1024 * 1024) {
 private val coverWorkers = Semaphore(3)
 
 @Composable fun TrackArtwork(track: Track?, modifier: Modifier = Modifier, label: String? = null) {
-    if (track == null || (!track.device && !track.imported)) {
+    if (track == null || (!track.device && !track.imported && track.provider == null)) {
         Artwork(track?.artwork ?: 0, modifier, label)
         return
     }
@@ -44,6 +47,14 @@ private val coverWorkers = Semaphore(3)
         value = withContext(Dispatchers.IO) {
             coverWorkers.withPermit {
                 coverCache.get(source) ?: runCatching {
+                    if (safeRemoteImage(source) != null) {
+                        val bytes = MusicHttp.get(MusicHttp.client, source.toHttpUrl(), 2 * 1024 * 1024)
+                        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+                        var sample = 1
+                        while (maxOf(bounds.outWidth, bounds.outHeight) / sample > 768) sample *= 2
+                        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, BitmapFactory.Options().apply { inSampleSize = sample })?.also { coverCache.put(source, it) }
+                    } else {
                     val uri = Uri.parse(source)
                     val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
                     context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
@@ -52,6 +63,7 @@ private val coverWorkers = Semaphore(3)
                     context.contentResolver.openInputStream(uri)?.use {
                         BitmapFactory.decodeStream(it, null, BitmapFactory.Options().apply { inSampleSize = sample })
                     }?.also { coverCache.put(source, it) }
+                    }
                 }.getOrNull()
             }
         }

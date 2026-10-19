@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
@@ -26,12 +27,13 @@ import com.ami.music.ui.theme.*
     onAdd: (Track) -> Unit, onArtist: (Track) -> Unit,
 ) {
     val track = state.current
+    val uriHandler = LocalUriHandler.current
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         PageHeader("Now playing", onBack, action = { IconButton(onClick = onQueue) { Icon(Icons.Default.QueueMusic, "Open queue") } })
         if (track == null) {
             EmptyState(Icons.Default.MusicNote, "A moment of quiet", "Choose a track to start listening.", "Find music", onBack)
         } else Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(if (track.imported || track.device) "FROM YOUR COLLECTION" else "AMI ORIGINALS", color = Muted, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(vertical = 16.dp))
+            Text(if (track.provider == "audius") "STREAMING FROM AUDIUS" else if (track.imported || track.device) "FROM YOUR COLLECTION" else "AMI ORIGINALS", color = Muted, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(vertical = 16.dp))
             TrackArtwork(track, Modifier.widthIn(max = 380.dp).fillMaxWidth().aspectRatio(1f), track.album)
             Spacer(Modifier.height(28.dp))
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -41,6 +43,7 @@ import com.ami.music.ui.theme.*
                 }
                 IconButton(onClick = { onLike(track) }) { Icon(if (track.id in library.likedIds) Icons.Default.Favorite else Icons.Default.FavoriteBorder, if (track.id in library.likedIds) "Unlike ${track.title}" else "Like ${track.title}", tint = if (track.id in library.likedIds) Lime else Muted) }
             }
+            if (track.provider == "audius" && track.externalUrl != null) TextButton(onClick = { runCatching { uriHandler.openUri(track.externalUrl) } }) { Text("View on Audius", color = Muted) }
             var seeking by remember(track.id) { mutableStateOf<Float?>(null) }
             val duration = state.durationMs.coerceAtLeast(1).toFloat()
             Slider(value = seeking ?: (state.elapsedMs.toFloat() / duration).coerceIn(0f, 1f), onValueChange = { seeking = it }, onValueChangeFinished = { seeking?.let { playback.seekTo((it * duration).toLong()) }; seeking = null }, enabled = state.durationMs > 0, modifier = Modifier.fillMaxWidth().semantics { contentDescription = "Playback position"; stateDescription = "${durationLabel(state.elapsedMs)} of ${durationLabel(state.durationMs)}" })

@@ -3,10 +3,15 @@ package com.ami.music.data
 import androidx.room.Database
 import androidx.room.RoomDatabase
 
-@Database(entities = [Track::class, Playlist::class, PlaylistEntry::class, Like::class, History::class], version = 2, exportSchema = true)
+@Database(entities = [Track::class, Playlist::class, PlaylistEntry::class, Like::class, History::class], version = 3, exportSchema = true)
 abstract class AmiDatabase : RoomDatabase() {
     abstract fun libraryDao(): LibraryDao
     companion object {
+        val MIGRATION_2_3 = object : androidx.room.migration.Migration(2, 3) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                listOf("provider", "externalUrl", "artistUrl").forEach { db.execSQL("ALTER TABLE tracks ADD COLUMN $it TEXT") }
+            }
+        }
         val MIGRATION_1_2 = object : androidx.room.migration.Migration(1, 2) {
             override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
                 listOf("artworkUri", "albumArtist", "genre", "year", "trackNumber", "fileName", "mimeType", "bitrate").forEach {

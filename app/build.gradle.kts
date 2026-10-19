@@ -11,8 +11,8 @@ android {
         applicationId = "com.ami.music"
         minSdk = 26
         targetSdk = 35
-        versionCode = 2
-        versionName = "0.2.0"
+        versionCode = 3
+        versionName = "0.3.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     buildFeatures { compose = true }
@@ -25,6 +25,9 @@ android {
 }
 ksp { arg("room.schemaLocation", "$projectDir/schemas") }
 dependencies {
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
+    testImplementation("org.json:json:20240303")
     implementation(libs.core)
     implementation(libs.activity)
     implementation(libs.lifecycle.compose)

@@ -35,7 +35,7 @@ class MigrationTest {
                 db.execSQL("INSERT INTO playlist_entries VALUES ('p','saved',0)")
                 db.version = 1
             }
-            val migrated = Room.databaseBuilder(context, AmiDatabase::class.java, name).addMigrations(AmiDatabase.MIGRATION_1_2).build()
+            val migrated = Room.databaseBuilder(context, AmiDatabase::class.java, name).addMigrations(AmiDatabase.MIGRATION_1_2, AmiDatabase.MIGRATION_2_3).build()
             try {
                 val track = migrated.libraryDao().track("saved")!!
                 assertEquals("Saved song", track.title)

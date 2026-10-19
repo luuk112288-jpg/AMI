@@ -67,7 +67,7 @@ class PlaybackConnection(context: Context, repository: LibraryRepository) : Auto
             player.duration.takeIf { it > 0 } ?: tracks[player.currentMediaItem?.mediaId]?.durationMs ?: 0,
             player.playWhenReady, player.playbackState == Player.STATE_BUFFERING, player.shuffleModeEnabled,
             when (player.repeatMode) { Player.REPEAT_MODE_ALL -> RepeatMode.All; Player.REPEAT_MODE_ONE -> RepeatMode.One; else -> RepeatMode.Off },
-            player.volume, player.playerError?.let { "This track could not be played. Try another file or re-import the audio." })
+            player.volume, player.playerError?.let { if (tracks[player.currentMediaItem?.mediaId]?.provider == "audius") "This online track is unavailable or the connection was interrupted. Retry, or play your local music." else "This track could not be played. Try another file or re-import the audio." })
     }
 
     fun playTracks(tracks: List<Track>, startIndex: Int = 0) {

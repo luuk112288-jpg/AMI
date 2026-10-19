@@ -49,7 +49,7 @@ import com.ami.music.ui.theme.*
                 Spacer(Modifier.height(7.dp))
                 Text(if (kind == "artist") "Artist · ${tracks.size} tracks" else "${tracks.size} tracks · ${durationLabel(tracks.sumOf { it.durationMs })}", color = Muted, modifier = Modifier.fillMaxWidth())
                 Row(Modifier.fillMaxWidth().padding(vertical = 18.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text(if (kind == "playlist" || kind == "liked") "Curated by you" else if (tracks.any { it.imported || it.device }) "From your collection" else "AMI Originals · demo music", color = Muted, modifier = Modifier.weight(1f))
+                    Text(if (kind == "playlist" || kind == "liked") "Curated by you" else if (tracks.any { it.provider == "audius" }) "Includes online tracks from Audius" else if (tracks.any { it.imported || it.device }) "From your collection" else "AMI Originals · demo music", color = Muted, modifier = Modifier.weight(1f))
                     IconButton(enabled = tracks.isNotEmpty() && player.connected, onClick = { onShuffle(!player.shuffle) }) { Icon(Icons.Default.Shuffle, if (player.shuffle) "Turn shuffle off" else "Turn shuffle on", tint = if (player.shuffle) Lime else Muted) }
                     FilledIconButton(enabled = tracks.isNotEmpty() && player.connected, onClick = { onPlay(tracks, 0) }, modifier = Modifier.size(56.dp)) { Icon(Icons.Default.PlayArrow, "Play $title", Modifier.size(32.dp)) }
                 }
