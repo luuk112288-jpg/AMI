@@ -2,9 +2,13 @@
 
 AMI — Artificial Music Intelligence. A native Android music app with a dark, lime-accented interface, local phone music, embedded album artwork, original demo music, and a private on-device library.
 
-**Delivery status — AMI 0.2.0:** APK compiled successfully; JVM unit tests and all 21 Android instrumentation tests passed on API 35. [Download the APK ZIP](https://github.com/luuk112288-jpg/AMI/actions/runs/39275146863/artifacts/12197625959) (GitHub sign-in required). Extract and install `app-debug.apk`. REA has not run; see `docs/rea-investigation.md`.
+**Delivery status — AMI 0.3.0:** APK build and JVM unit tests passed; all 25 Android instrumentation tests passed on API 35, including real Audius streaming. [Download AMI-0.3.0.apk](https://github.com/luuk112288-jpg/AMI/releases/download/v0.3.0/AMI-0.3.0.apk). REA has not run; see `docs/rea-investigation.md`.
 
 ## Features
+
+- Search → Online: public Audius trending tracks, text search and pagination, with direct playback in AMI.
+- Online artwork, attribution/source links, likes, mixed local/online playlists and service-owned background playback.
+- Public playable tracks only; no Audius account or Spotify app needed. Online requests and streams use internet data.
 
 - Scan phone audio through Android MediaStore after granting Music and audio access (storage access on Android 8–12).
 - Play scanned files in place without copying or modifying the originals; refresh automatically when returning to AMI, or tap Scan phone.
@@ -101,3 +105,11 @@ GitHub checkouts generate the original demo audio with `node scripts/generate-au
 The device workflow installs FFmpeg and runs `bash scripts/generate-test-fixture.sh` to create a two-second original tone with synthetic metadata and the AMI cover. Run this before local instrumentation tests. Tests cover metadata extraction, private cover access, scanned content-URI playback, rescan deduplication, likes/playlist preservation, existing-import enrichment and database migration.
 
 Debug builds use a development signing key. Android only permits an in-place upgrade when both APKs share a signing key; builds from separate fresh runners may require a fresh install. Uninstalling removes AMI's private imports/playlists, but leaves scanned original music files untouched. Production distribution requires a persistent private signing key.
+
+## Online music in AMI 0.3
+
+Open **Search → Online**. Browse trending tracks or enter a title/artist. Tap a track to play it, a heart to save it, or its menu to add it to a playlist. Online tracks are marked **Audius**, and their source/artist links open Audius. Saved online tracks keep metadata in your library but require internet to stream. AMI does not download their audio.
+
+Only tracks marked publicly streamable with no stream gates, unavailable/deleted flags or API-key restrictions are offered. Catalog and track availability can change. HTTP/network/rate-limit failures show retry messages; your local music continues to work. Audius has its own catalog, not Spotify's full catalog. AMI adds no advertising.
+
+See `docs/audius-integration.md` for tested behavior and service boundaries.

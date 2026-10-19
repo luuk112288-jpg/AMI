@@ -10,3 +10,6 @@
 - Spotify is referenced only to describe the requested application category. AMI is independent and has no Spotify affiliation or bundled Spotify catalog.
 
 The supplied original source and generated demonstration assets are available for the user's AMI project. Third-party components retain their respective licenses.
+
+- Audius integration: catalog metadata, artwork and streams are requested at runtime through the public Audius API. Audio/artwork is not bundled in the APK. Artist names and Audius source links are retained; playback uses the stable API stream endpoint rather than storing temporary signed content-node links.
+- OkHttp 4.12.0: Apache License 2.0. MockWebServer and org.json are JVM test dependencies only.
